@@ -1,10 +1,27 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice,createAsyncThunk } from "@reduxjs/toolkit";
 
 const initialState = {
   isLoading: false,
   register: [],
   error: null,
 };
+
+
+export const fetchUsers=createAsyncThunk(
+    "user/fetchUsers",
+    async(_,{rejectWithValue})=>{
+        try {
+            const response=await fetch("https://fakestoreapi.com/users")
+            if(!response.ok){
+                throw new Error("Failed to fetch users data");
+            }
+            const data= await response.json();
+            return data.slice(0, 5);
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+)
 
 const regSlice = createSlice({
   name: "user",
@@ -22,6 +39,22 @@ const regSlice = createSlice({
       (state.isLoading = false), (state.error = action.payload);
     },
   },
+
+  extraReducers:(builder)=>{
+    builder
+    .addCase(fetchUsers.pending,(state)=>{
+        state.isLoading=true;
+        state.error=null;
+    })
+    .addCase(fetchUsers.fulfilled,(state,action)=>{
+        state.isLoading=false,
+        state.register=action.payload
+    })
+    .addCase(fetchUsers.rejected,(state,action)=>{
+        state.isLoading=false,
+        state.error=action.payload
+    })
+  }
 });
 
 
